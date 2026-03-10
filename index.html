@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#a31d1d">
-    <link rel="manifest" href="manifest.json">
-    <title>RhB Snow Catch - Chill Mode</title>
+    <title>RhB Snow Catch - Highscore Edition</title>
     <style>
         :root {
             --case-color: #a31d1d;
@@ -14,7 +13,8 @@
         }
 
         * {
-            touch-action: manipulation;
+            box-sizing: border-box;
+            /* Verhindert Text-Markierung */
             -webkit-user-select: none;
             user-select: none;
         }
@@ -61,6 +61,7 @@
             overflow: hidden;
         }
 
+        /* Startbildschirm & Highscore */
         #start-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -73,6 +74,19 @@
             text-align: center;
         }
 
+        #highscore-board {
+            margin-top: 15px;
+            padding: 5px;
+            width: 80%;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px dashed var(--lcd-ink);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: var(--lcd-ink);
+            text-align: left;
+        }
+
         .left-box, .right-box { display: flex; flex-direction: column; align-items: center; gap: 20px; }
         .move-axis { margin-top: 100px; } 
 
@@ -80,6 +94,8 @@
             width: 70px; height: 70px; background: #222; border: 5px solid #000;
             border-radius: 50%; color: #fff; font-size: 24px; cursor: pointer;
             box-shadow: 0 5px 0 #000; display: flex; justify-content: center; align-items: center;
+            /* Das ist der wichtigste Befehl gegen Ghost Clicks: */
+            touch-action: none; 
         }
         .control-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; background: #444; }
         .action-btn { background: #cc0000; border-color: #800; box-shadow: 0 5px 0 #800; }
@@ -95,7 +111,7 @@
 
 <div id="game-pad">
     <div class="left-box">
-        <div class="move-axis" onpointerdown="doAction(event, 'left')">
+        <div class="move-axis" id="btn-left">
             <div class="control-btn">◀</div>
             <div class="btn-label">LINKS</div>
         </div>
@@ -105,8 +121,11 @@
         <div id="screen">
             <div id="start-overlay">
                 <h2 style="color:var(--lcd-ink); margin:0;">RhB SNOW CATCH</h2>
-                <p style="color:var(--lcd-ink); font-size:12px;">Depot Pontresina (Slow Mode)</p>
-                <button onpointerdown="startGame()" style="background:#222; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">START</button>
+                <p style="color:var(--lcd-ink); font-size:12px; margin-bottom: 10px;">Depot Pontresina</p>
+                <button id="btn-start" style="background:#222; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">START</button>
+                
+                <div id="highscore-board">
+                    </div>
             </div>
 
             <div class="ui">
@@ -140,11 +159,11 @@
     </div>
 
     <div class="right-box">
-        <div onpointerdown="doAction(event, 'out')">
+        <div id="btn-out">
             <div class="control-btn action-btn">OUT</div>
             <div class="btn-label">ABLADEN</div>
         </div>
-        <div onpointerdown="doAction(event, 'right')">
+        <div id="btn-right">
             <div class="control-btn">▶</div>
             <div class="btn-label">RECHTS</div>
         </div>
@@ -152,6 +171,7 @@
 </div>
 
 <script>
+    // --- Audio System ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(f, d, t="square", v=0.08) {
         if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -161,22 +181,65 @@
         o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
     }
 
+    // --- Spiel Variablen ---
     let pPos=2, tPos=0, tDir=1, snowInv=0, wagonFill=0, flakes=[], flakesLeft=40, gameActive=false;
 
+    // --- Highscore System ---
+    function saveHighscore(score) {
+        let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
+        // Kurzes Datumsformat (z.B. 24.12. 14:30)
+        let now = new Date();
+        let dateStr = `${now.getDate()}.${now.getMonth()+1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        history.unshift({ date: dateStr, score: score });
+        if(history.length > 10) history = history.slice(0, 10); // Nur die letzten 10 behalten
+        
+        localStorage.setItem('rhbHistory', JSON.stringify(history));
+        updateHighscoreBoard();
+    }
+
+    function updateHighscoreBoard() {
+        let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
+        let board = document.getElementById('highscore-board');
+        if(history.length === 0) {
+            board.innerHTML = "Noch keine Einträge.";
+            return;
+        }
+        
+        let html = "<strong>Letzte 10 Schichten:</strong><br>";
+        history.forEach((entry, index) => {
+            let symbol = entry.score >= 20 ? "🏆" : "❄️";
+            html += `${index+1}. ${entry.date} - ${entry.score}/20 ${symbol}<br>`;
+        });
+        board.innerHTML = html;
+    }
+
+    // --- Spielsteuerung / Logik ---
     function startGame() {
         document.getElementById('start-overlay').style.display = 'none';
         gameActive = true;
         audioCtx.resume();
     }
 
-    // Neuer Controller, der Doppelklicks abfängt
-    function doAction(e, action) {
-        if(e) e.preventDefault(); // Stoppt Ghost-Clicks auf Mobilgeräten
-        if(!gameActive) return;
+    function resetGame() {
+        pPos=2; tPos=0; tDir=1; snowInv=0; wagonFill=0; flakes=[]; flakesLeft=40;
+        document.getElementById('start-overlay').style.display = 'flex';
+        render();
+    }
 
-        if(action === 'left') moveLeft();
-        if(action === 'right') moveRight();
-        if(action === 'out') actionEmpty();
+    function doAction(action) {
+        if(!gameActive) return;
+        if(action === 'left' && pPos>0){ pPos--; playBeep(250, 0.05); }
+        if(action === 'right' && pPos<7){ pPos++; playBeep(250, 0.05); }
+        if(action === 'out'){
+            if(Math.abs(pPos-(tPos+1.5))<=1 && snowInv>0){ 
+                wagonFill+=snowInv; snowInv=0; 
+                playBeep(700, 0.15, "triangle"); 
+            } else {
+                playBeep(80, 0.1);
+            }
+        }
+        render();
     }
 
     const loop = setInterval(() => {
@@ -196,7 +259,6 @@
 
         if(flakesLeft>0 && flakes.length<2 && Math.random()>0.6) {
             flakes.push({x: Math.floor(Math.random()*8), y:0}); flakesLeft--;
-            document.getElementById('ammo').innerText = flakesLeft;
             playBeep(500, 0.05);
         }
         
@@ -204,29 +266,19 @@
         render();
     }, 800);
 
-    function moveLeft(){ if(pPos>0){ pPos--; playBeep(250, 0.05); render(); }}
-    function moveRight(){ if(pPos<7){ pPos++; playBeep(250, 0.05); render(); }}
-    
-    function actionEmpty(){
-        if(Math.abs(pPos-(tPos+1.5))<=1 && snowInv>0){ 
-            wagonFill+=snowInv; snowInv=0; 
-            playBeep(700, 0.15, "triangle"); 
-            render(); 
-        }
-        else playBeep(80, 0.1);
-    }
-
     function checkEnd() {
         gameActive=false;
-        if(wagonFill>=20) alert("Lok 1 vorwärts Depot Pontresina");
+        saveHighscore(wagonFill); // Speichern vor dem Alert!
+        if(wagonFill>=20) alert("Lok 1 vorwärts Depot Pontresina!");
         else alert("Der Winter ist noch lang, Pfeife!!!");
-        location.reload();
+        resetGame(); // Weicher Reset statt location.reload()
     }
 
     function render() {
         document.getElementById('player-svg').style.left = (pPos * 45) + "px";
         document.getElementById('shovel-snow-load').style.display = snowInv>0 ? "block" : "none";
         document.getElementById('snow-val').innerText = snowInv;
+        document.getElementById('ammo').innerText = flakesLeft;
         document.getElementById('train-unit').style.left = (tPos * 50) + "px";
         document.getElementById('wagon-val').innerText = wagonFill;
         for(let i=1; i<=3; i++) document.getElementById('w-snow-'+i).style.display = wagonFill >= (i*6) ? "block" : "none";
@@ -242,13 +294,35 @@
         });
     }
 
-    // Tastatursteuerung für Desktop-Spieler wieder hinzugefügt
+    // --- Input Listener Registrierung ---
+    // Verhindert zu 100% Ghost Clicks durch pointerdown und e.preventDefault()
+    function bindButton(id, action) {
+        const btn = document.getElementById(id);
+        btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault(); // Stoppt den Browser!
+            if(id === 'btn-start') startGame();
+            else doAction(action);
+        });
+        // Kontextmenü bei langem Drücken unterdrücken
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+    }
+
+    bindButton('btn-left', 'left');
+    bindButton('btn-right', 'right');
+    bindButton('btn-out', 'out');
+    bindButton('btn-start', 'start');
+
+    // Tastatursteuerung für Desktop-Spieler
     document.addEventListener('keydown', (e) => {
         if(!gameActive) return;
-        if(e.key === "ArrowLeft") doAction(null, 'left');
-        if(e.key === "ArrowRight") doAction(null, 'right');
-        if(e.key === " " || e.key === "ArrowUp") doAction(null, 'out');
+        if(e.key === "ArrowLeft") doAction('left');
+        if(e.key === "ArrowRight") doAction('right');
+        if(e.key === " " || e.key === "ArrowUp") doAction('out');
     });
+
+    // Initialisieren
+    updateHighscoreBoard();
+    render();
 </script>
 </body>
 </html>
