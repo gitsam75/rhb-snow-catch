@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1a1a1a">
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Snow Catch">
+    
     <title>RhB Snow Catch - Pro Mode</title>
     <style>
         :root {
@@ -24,6 +31,8 @@
             margin: 0;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
+            /* Verhindert "Pull-to-refresh" auf Handys */
+            overscroll-behavior-y: contain;
         }
 
         #game-wrapper {
@@ -70,7 +79,7 @@
             width: 70px; height: 70px; background: #222; border: 5px solid #000;
             border-radius: 50%; color: #fff; font-size: 24px; cursor: pointer;
             box-shadow: 0 5px 0 #000; display: flex; justify-content: center; align-items: center;
-            touch-action: none; /* Blockiert Ghost Clicks auf dem Handy */
+            touch-action: none; 
         }
         .control-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; background: #444; }
         .action-btn { background: #cc0000; border-color: #800; box-shadow: 0 5px 0 #800; }
@@ -165,8 +174,8 @@
     window.addEventListener('resize', resizeGame);
     resizeGame();
 
-    // --- Audio System (Sicher) ---
-    let audioCtx = null; // Wird erst beim Klick geladen!
+    // --- Audio System ---
+    let audioCtx = null; 
 
     function initAudio() {
         try {
@@ -177,13 +186,11 @@
             if(audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-        } catch(e) {
-            console.warn("Audio konnte nicht gestartet werden:", e);
-        }
+        } catch(e) { console.warn("Audio Problem", e); }
     }
 
     function playBeep(f, d, t="square", v=0.08) {
-        if(!audioCtx) return; // Wenn kein Audio da ist, stürzt das Spiel nicht ab
+        if(!audioCtx) return; 
         try {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const o = audioCtx.createOscillator();
@@ -202,7 +209,7 @@
     // --- Spiel Variablen ---
     let pPos=2, tPos=0, tDir=1, snowInv=0, wagonFill=0, flakes=[], flakesLeft=40, gameActive=false;
 
-    // --- Highscore System (Sicher) ---
+    // --- Highscore System ---
     function saveHighscore(score) {
         try {
             let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
@@ -214,7 +221,7 @@
             
             localStorage.setItem('rhbHistory', JSON.stringify(history));
             updateHighscoreBoard();
-        } catch(e) { console.warn("Highscore Speichern blockiert."); }
+        } catch(e) {}
     }
 
     function updateHighscoreBoard() {
@@ -232,27 +239,24 @@
             });
             board.innerHTML = html;
         } catch(e) {
-            document.getElementById('highscore-board').innerHTML = "Highscore lokal deaktiviert.";
+            document.getElementById('highscore-board').innerHTML = "Highscore deaktiviert.";
         }
     }
 
     // --- Spiel Logik ---
     function startGame() {
-        // 1. Audio sicher laden
         initAudio();
 
-        // 2. Fullscreen Versuch (ignoriert Fehler)
         try {
             let elem = document.documentElement;
             if (elem.requestFullscreen) {
                 let p = elem.requestFullscreen();
-                if(p) p.catch(e => {}); // Fehler abfangen ohne Crash
+                if(p) p.catch(e => {}); 
             } else if (elem.webkitRequestFullscreen) { 
                 elem.webkitRequestFullscreen();
             }
         } catch(e) {}
 
-        // 3. Spiel aktivieren
         document.getElementById('start-overlay').style.display = 'none';
         gameActive = true;
         setTimeout(resizeGame, 300); 
@@ -334,7 +338,6 @@
         });
     }
 
-    // --- Input Listener ---
     function bindGameButton(id, action) {
         const btn = document.getElementById(id);
         btn.addEventListener('pointerdown', (e) => {
@@ -344,17 +347,12 @@
         btn.addEventListener('contextmenu', e => e.preventDefault());
     }
 
-    // Spiel-Buttons wie bisher binden (gegen Ghost Clicks)
     bindGameButton('btn-left', 'left');
     bindGameButton('btn-right', 'right');
     bindGameButton('btn-out', 'out');
 
-    // START-Button wird jetzt GANZ NORMAL als Klick registriert (erlaubt Audio und Fullscreen!)
-    document.getElementById('btn-start').addEventListener('click', () => {
-        startGame();
-    });
+    document.getElementById('btn-start').addEventListener('click', startGame);
 
-    // Tastatursteuerung für Desktop-Spieler
     document.addEventListener('keydown', (e) => {
         if(!gameActive) return;
         if(e.key === "ArrowLeft") doAction('left');
