@@ -1,0 +1,16 @@
+{
+  "name": "RhB Snow Catch",
+  "short_name": "RhB Snow",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#a31d1d",
+  "theme_color": "#a31d1d",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192/a31d1d/ffffff?text=RhB",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ]
+}
