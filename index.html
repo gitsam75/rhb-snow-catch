@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RhB Snow">
     
-    <title>RhB Snow Catch - Highscore Edition</title>
+    <title>RhB Snow Catch - Pro Mode</title>
     <style>
         :root {
             --case-color: #a31d1d;
@@ -24,72 +24,50 @@
             user-select: none;
         }
 
-        body {
+        body, html {
             background-color: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            height: 100%;
             margin: 0;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
-            overscroll-behavior-y: contain; /* Blockiert Pull-to-Refresh auf Handys */
+            overscroll-behavior-y: contain; /* Blockiert Pull-to-Refresh */
+        }
+
+        #game-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
         }
 
         #game-pad {
             background-color: var(--case-color);
-            width: 800px;
-            height: 450px;
-            border-radius: 40px;
-            display: grid;
-            grid-template-columns: 1fr 2.5fr 1fr;
-            align-items: center;
-            padding: 20px;
-            box-shadow: inset 0 5px 15px rgba(255,255,255,0.3), 0 10px 0 #6d1313;
-            border: 5px solid #6d1313;
-            transform-origin: center center;
-            transition: transform 0.3s ease;
+            width: 800px; height: 450px; border-radius: 40px;
+            display: grid; grid-template-columns: 180px 1fr 180px; align-items: center;
+            padding: 20px; box-shadow: inset 0 5px 15px rgba(255,255,255,0.3), 0 10px 0 #6d1313;
+            border: 5px solid #6d1313; transform-origin: center center; transition: transform 0.3s ease;
         }
 
         #screen-container {
             background: linear-gradient(145deg, #bbb, #eee);
-            padding: 10px;
-            border-radius: 12px;
-            border: 3px solid #333;
+            padding: 10px; border-radius: 12px; border: 3px solid #333;
+            width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;
         }
 
         #screen {
-            background-color: var(--screen-bg);
-            width: 100%;
-            aspect-ratio: 4 / 3;
-            position: relative;
-            border: 2px solid #7a8664;
-            overflow: hidden;
+            background-color: var(--screen-bg); width: 100%; height: 100%;
+            position: relative; border: 2px solid #7a8664; overflow: hidden;
         }
 
         #start-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--screen-bg);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--screen-bg); z-index: 100; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
         }
 
         #highscore-board {
-            margin-top: 15px;
-            padding: 5px;
-            width: 80%;
-            max-height: 120px;
-            overflow-y: auto;
-            border: 1px dashed var(--lcd-ink);
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            color: var(--lcd-ink);
-            text-align: left;
+            margin-top: 15px; padding: 5px; width: 80%; max-height: 120px; overflow-y: auto;
+            border: 1px dashed var(--lcd-ink); font-family: 'Courier New', Courier, monospace;
+            font-size: 11px; color: var(--lcd-ink); text-align: left;
         }
 
         .left-box, .right-box { display: flex; flex-direction: column; align-items: center; gap: 20px; }
@@ -113,69 +91,78 @@
 </head>
 <body>
 
-<div id="game-pad">
-    <div class="left-box">
-        <div class="move-axis" id="btn-left">
-            <div class="control-btn">◀</div>
-            <div class="btn-label">LINKS</div>
-        </div>
-    </div>
-
-    <div id="screen-container">
-        <div id="screen">
-            <div id="start-overlay">
-                <h2 style="color:var(--lcd-ink); margin:0;">RhB SNOW CATCH</h2>
-                <p style="color:var(--lcd-ink); font-size:12px; margin-bottom: 10px;">Depot Pontresina</p>
-                
-                <button id="btn-start" onpointerdown="startGame(event)" style="background:#222; color:white; border:none; padding:15px 25px; border-radius:5px; font-weight:bold; font-size: 16px; cursor:pointer; touch-action: manipulation;">START</button>
-                
-                <div id="highscore-board"></div>
+<div id="game-wrapper">
+    <div id="game-pad">
+        <div class="left-box">
+            <div class="move-axis" id="btn-left">
+                <div class="control-btn">◀</div>
+                <div class="btn-label">LINKS</div>
             </div>
+        </div>
 
-            <div class="ui">
-                <div>VORRAT: <span id="ammo">40</span></div>
-                <div style="text-align:right;">
-                    SCHAUFEL: <span id="snow-val">0</span>/5<br>
-                    WAGEN: <span id="wagon-val">0</span>/20
+        <div id="screen-container">
+            <div id="screen">
+                <div id="start-overlay">
+                    <h2 style="color:var(--lcd-ink); margin:0;">RhB SNOW CATCH</h2>
+                    <p style="color:var(--lcd-ink); font-size:12px; margin-bottom: 10px;">Depot Pontresina</p>
+                    
+                    <button id="btn-start" onclick="startGame()" style="background:#222; color:white; border:none; padding:15px 25px; border-radius:5px; font-weight:bold; font-size: 16px; cursor:pointer;">START</button>
+                    
+                    <div id="highscore-board"></div>
+                </div>
+
+                <div class="ui">
+                    <div>VORRAT: <span id="ammo">40</span></div>
+                    <div style="text-align:right;">
+                        SCHAUFEL: <span id="snow-val">0</span>/5<br>
+                        WAGEN: <span id="wagon-val">0</span>/20
+                    </div>
+                </div>
+                
+                <div id="yeti" style="position:absolute; top:10px; left:45%; font-size:35px;">👹</div>
+                <div id="flakes-container"></div>
+
+                <div id="player-svg" style="position:absolute; top:180px; transform-origin: center;">
+                    <svg viewBox="0 0 75 95" width="60" height="75">
+                        <ellipse cx="30" cy="15" rx="9" ry="11" fill="black" />
+                        <rect x="20" y="5" width="20" height="4" fill="black" />
+                        <rect x="27" y="26" width="7" height="30" rx="2" fill="black" />
+                        <path d="M28 55 L18 80 L12 80 M32 55 L42 80 L48 80" stroke="black" stroke-width="4" fill="none" />
+                        <path d="M30 35 L55 45 L62 45" stroke="black" stroke-width="3" fill="none" />
+                        <rect x="58" y="42" width="18" height="5" fill="black" />
+                        <path id="shovel-snow-load" d="M58 42 Q67 -5 77 42 Z" fill="black" style="display:none;" />
+                    </svg>
+                </div>
+
+                <div id="train-unit">
+                    <svg width="70" height="50" viewBox="0 0 90 60"><rect x="5" y="15" width="80" height="40" rx="4" fill="black" /><rect x="10" y="20" width="18" height="15" fill="#9ead86" /><rect x="62" y="20" width="18" height="15" fill="#9ead86" /><circle cx="20" cy="55" r="5" fill="black" /><circle cx="70" cy="55" r="5" fill="black" /></svg>
+                    <svg width="90" height="50" viewBox="0 0 110 60"><rect x="0" y="45" width="110" height="6" stroke="black" stroke-width="3" fill="none" /><line x1="10" y1="45" x2="10" y2="15" stroke="black" stroke-width="2" /><line x1="55" y1="45" x2="55" y2="15" stroke="black" stroke-width="2" /><line x1="100" y1="45" x2="100" y2="15" stroke="black" stroke-width="2" /><path id="w-snow-1" d="M10 45 Q35 25 60 45 Z" style="fill:black;display:none;" /><path id="w-snow-2" d="M50 45 Q80 20 105 45 Z" style="fill:black;display:none;" /><path id="w-snow-3" d="M20 35 Q55 5 95 35 Z" style="fill:black;display:none;" /><circle cx="30" cy="55" r="5" fill="black" /><circle cx="80" cy="55" r="5" fill="black" /></svg>
                 </div>
             </div>
-            
-            <div id="yeti" style="position:absolute; top:10px; left:45%; font-size:35px;">👹</div>
-            <div id="flakes-container"></div>
-
-            <div id="player-svg" style="position:absolute; top:180px;">
-                <svg viewBox="0 0 75 95" width="60" height="75">
-                    <ellipse cx="30" cy="15" rx="9" ry="11" fill="black" />
-                    <rect x="20" y="5" width="20" height="4" fill="black" />
-                    <rect x="27" y="26" width="7" height="30" rx="2" fill="black" />
-                    <path d="M28 55 L18 80 L12 80 M32 55 L42 80 L48 80" stroke="black" stroke-width="4" fill="none" />
-                    <path d="M30 35 L55 45 L62 45" stroke="black" stroke-width="3" fill="none" />
-                    <rect x="58" y="42" width="18" height="5" fill="black" />
-                    <path id="shovel-snow-load" d="M58 42 Q67 -5 77 42 Z" fill="black" style="display:none;" />
-                </svg>
-            </div>
-
-            <div id="train-unit">
-                <svg width="70" height="50" viewBox="0 0 90 60"><rect x="5" y="15" width="80" height="40" rx="4" fill="black" /><rect x="10" y="20" width="18" height="15" fill="#9ead86" /><rect x="62" y="20" width="18" height="15" fill="#9ead86" /><circle cx="20" cy="55" r="5" fill="black" /><circle cx="70" cy="55" r="5" fill="black" /></svg>
-                <svg width="90" height="50" viewBox="0 0 110 60"><rect x="0" y="45" width="110" height="6" stroke="black" stroke-width="3" fill="none" /><line x1="10" y1="45" x2="10" y2="15" stroke="black" stroke-width="2" /><line x1="55" y1="45" x2="55" y2="15" stroke="black" stroke-width="2" /><line x1="100" y1="45" x2="100" y2="15" stroke="black" stroke-width="2" /><path id="w-snow-1" d="M10 45 Q35 25 60 45 Z" style="fill:black;display:none;" /><path id="w-snow-2" d="M50 45 Q80 20 105 45 Z" style="fill:black;display:none;" /><path id="w-snow-3" d="M20 35 Q55 5 95 35 Z" style="fill:black;display:none;" /><circle cx="30" cy="55" r="5" fill="black" /><circle cx="80" cy="55" r="5" fill="black" /></svg>
-            </div>
         </div>
-    </div>
 
-    <div class="right-box">
-        <div id="btn-out">
-            <div class="control-btn action-btn">OUT</div>
-            <div class="btn-label">ABLADEN</div>
-        </div>
-        <div id="btn-right">
-            <div class="control-btn">▶</div>
-            <div class="btn-label">RECHTS</div>
+        <div class="right-box">
+            <div id="btn-out">
+                <div class="control-btn action-btn">OUT</div>
+                <div class="btn-label">ABLADEN</div>
+            </div>
+            <div id="btn-right">
+                <div class="control-btn">▶</div>
+                <div class="btn-label">RECHTS</div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- Auto-Skalierung und Drehung ---
+    // --- Service Worker (Wichtig für PWA Installation) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Info:', err));
+        });
+    }
+
+    // --- Auto-Skalierung ---
     function resizeGame() {
         const pad = document.getElementById('game-pad');
         const winW = window.innerWidth;
@@ -193,36 +180,25 @@
     window.addEventListener('resize', resizeGame);
     resizeGame();
 
-    // --- Audio System (FEHLERSICHER GEMACHT) ---
-    let audioCtx = null; // WICHTIG: Nicht sofort laden!
-
-    function initAudio() {
-        try {
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-            }
-            if(audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        } catch(e) {
-            console.warn("Audio Fehler:", e);
-        }
-    }
-
+    // --- Audio System ---
+    let audioCtx = null; 
     function playBeep(f, d, t="square", v=0.08) {
-        if(!audioCtx) return; // Absturzsicherung
+        if(!audioCtx) return; 
         try {
             if(audioCtx.state === 'suspended') audioCtx.resume();
-            const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-            o.type=t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
-            g.gain.setValueAtTime(v, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+d);
-            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime); 
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + d);
         } catch(e) {}
     }
 
     // --- Spiel Variablen ---
-    let pPos=2, tPos=0, tDir=1, snowInv=0, wagonFill=0, flakes=[], flakesLeft=40, gameActive=false;
+    let pPos = 2;       // 0-7 Horizontale Position
+    let pDir = 1;       // 1 = Rechts, -1 = Links
+    let tPos = 0, tDir = 1, snowInv = 0, wagonFill = 0, flakes = [], flakesLeft = 40, gameActive = false;
 
     // --- Highscore System ---
     function saveHighscore(score) {
@@ -236,7 +212,7 @@
             
             localStorage.setItem('rhbHistory', JSON.stringify(history));
             updateHighscoreBoard();
-        } catch(e) { console.warn("Highscore konnte nicht gespeichert werden."); }
+        } catch(e) {}
     }
 
     function updateHighscoreBoard() {
@@ -254,50 +230,58 @@
             });
             board.innerHTML = html;
         } catch(e) {
-            document.getElementById('highscore-board').innerHTML = "Lokaler Speicher blockiert.";
+            document.getElementById('highscore-board').innerHTML = "Highscore lokal deaktiviert.";
         }
     }
 
-    // --- Spielsteuerung / Logik ---
-    function startGame(e) {
-        if(e) e.preventDefault(); // Verhindert doppeltes Auslösen auf dem Handy
-        if(gameActive) return;
-
-        // 1. ZUERST das Spiel visuell starten (damit es auf jeden Fall lädt)
+    // --- Spiel Logik ---
+    function startGame() {
+        // 1. ABSOLUTE PRIORITÄT: Spiel aktivieren und Overlay weg (verhindert Hängenbleiben)
         document.getElementById('start-overlay').style.display = 'none';
         gameActive = true;
 
-        // 2. Audio sicher laden
-        initAudio();
-
-        // 3. Fullscreen versuchen (mit Fallback)
+        // 2. Danach erst potenziell fehleranfällige Dinge wie Audio laden (im gesicherten Try/Catch)
         try {
-            // Check: Sind wir nicht eh schon im Installiert-Modus (Standalone)?
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        } catch(err) { console.log("Audio in PWA geblockt."); }
+
+        // 3. Fullscreen (wird im Standalone/PWA Mode eh vom Browser ignoriert)
+        try {
             if (!window.matchMedia('(display-mode: standalone)').matches) {
                 let elem = document.documentElement;
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen().catch(err => console.log(err));
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                }
+                if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
             }
-        } catch(e) {}
-        
+        } catch(err) {}
+
         setTimeout(resizeGame, 300);
     }
 
     function resetGame() {
-        pPos=2; tPos=0; tDir=1; snowInv=0; wagonFill=0; flakes=[]; flakesLeft=40;
+        pPos=2; pDir=1; tPos=0; tDir=1; snowInv=0; wagonFill=0; flakes=[]; flakesLeft=40;
         document.getElementById('start-overlay').style.display = 'flex';
         render();
     }
 
     function doAction(action) {
         if(!gameActive) return;
-        if(action === 'left' && pPos>0){ pPos--; playBeep(250, 0.05); }
-        if(action === 'right' && pPos<7){ pPos++; playBeep(250, 0.05); }
-        if(action === 'out'){
-            if(Math.abs(pPos-(tPos+1.5))<=1 && snowInv>0){ 
+        
+        if(action === 'left') { 
+            pDir = -1; // Männchen dreht sich nach links
+            if(pPos > 0) pPos--; 
+            playBeep(250, 0.05); 
+        }
+        if(action === 'right') { 
+            pDir = 1; // Männchen dreht sich nach rechts
+            if(pPos < 7) pPos++; 
+            playBeep(250, 0.05); 
+        }
+        if(action === 'out') {
+            if(Math.abs(pPos - (tPos + 1.5)) <= 1.5 && snowInv > 0){ 
                 wagonFill+=snowInv; snowInv=0; 
                 playBeep(700, 0.15, "triangle"); 
             } else {
@@ -307,7 +291,7 @@
         render();
     }
 
-    const loop = setInterval(() => {
+    setInterval(() => {
         if(!gameActive) return;
         
         tPos += tDir; if(tPos>=4 || tPos<=0) tDir*=-1;
@@ -315,11 +299,19 @@
 
         flakes.forEach((f, i) => {
             f.y++;
-            if(f.y===4 && f.x === (pPos + 1)) { 
-                if(snowInv<5){snowInv++; playBeep(900, 0.1);} 
+            
+            // DIE MAGIE DES DREHENS: 
+            // Die Schaufelposition errechnet sich nun aus der Körperposition + Blickrichtung
+            let shovelPos = pPos + pDir; 
+            
+            if(f.y === 4 && f.x === shovelPos) { 
+                if(snowInv < 5) {
+                    snowInv++; 
+                    playBeep(900, 0.1);
+                } 
                 flakes.splice(i,1); 
             }
-            else if(f.y>6) flakes.splice(i,1);
+            else if(f.y > 6) flakes.splice(i,1);
         });
 
         if(flakesLeft>0 && flakes.length<2 && Math.random()>0.6) {
@@ -340,12 +332,18 @@
     }
 
     function render() {
-        document.getElementById('player-svg').style.left = (pPos * 45) + "px";
+        const playerSvg = document.getElementById('player-svg');
+        // Körper positionieren
+        playerSvg.style.left = (pPos * 45) + "px";
+        // SVG umdrehen je nach Blickrichtung (pDir = 1 oder -1)
+        playerSvg.style.transform = `scaleX(${pDir})`;
+
         document.getElementById('shovel-snow-load').style.display = snowInv>0 ? "block" : "none";
         document.getElementById('snow-val').innerText = snowInv;
         document.getElementById('ammo').innerText = flakesLeft;
         document.getElementById('train-unit').style.left = (tPos * 50) + "px";
         document.getElementById('wagon-val').innerText = wagonFill;
+        
         for(let i=1; i<=3; i++) document.getElementById('w-snow-'+i).style.display = wagonFill >= (i*6) ? "block" : "none";
         
         const c = document.getElementById('flakes-container'); 
@@ -359,21 +357,22 @@
         });
     }
 
-    // --- Input Listener Registrierung ---
-    function bindButton(id, action) {
+    // --- Input Listener ---
+    function bindGameButton(id, action) {
         const btn = document.getElementById(id);
-        btn.addEventListener('pointerdown', (e) => {
-            e.preventDefault(); 
-            doAction(action);
-        });
-        btn.addEventListener('contextmenu', e => e.preventDefault());
+        if(btn) {
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault(); 
+                doAction(action);
+            });
+            btn.addEventListener('contextmenu', e => e.preventDefault());
+        }
     }
 
-    bindButton('btn-left', 'left');
-    bindButton('btn-right', 'right');
-    bindButton('btn-out', 'out');
+    bindGameButton('btn-left', 'left');
+    bindGameButton('btn-right', 'right');
+    bindGameButton('btn-out', 'out');
 
-    // Tastatursteuerung für Desktop-Spieler
     document.addEventListener('keydown', (e) => {
         if(!gameActive) return;
         if(e.key === "ArrowLeft") doAction('left');
@@ -381,7 +380,6 @@
         if(e.key === " " || e.key === "ArrowUp") doAction('out');
     });
 
-    // Initialisieren
     updateHighscoreBoard();
     render();
 </script>
