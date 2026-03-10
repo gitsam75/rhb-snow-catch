@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a1a1a">
-    <title>RhB Snow Catch - Pro Mode</title>
+    <meta name="theme-color" content="#a31d1d">
+    <title>RhB Snow Catch - Highscore Edition</title>
     <style>
         :root {
             --case-color: #a31d1d;
@@ -18,40 +18,30 @@
             user-select: none;
         }
 
-        body, html {
+        body {
             background-color: #1a1a1a;
-            height: 100%;
-            margin: 0;
-            overflow: hidden; /* Verhindert Scrollen komplett */
-            font-family: 'Arial', sans-serif;
-        }
-
-        /* Ein Wrapper, der das Gamepad immer zentriert */
-        #game-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
         }
 
-        /* Das Gamepad hat jetzt eine feste Originalgröße und wird per JS skaliert */
         #game-pad {
             background-color: var(--case-color);
-            width: 800px;
-            height: 450px;
+            width: 90vw;
+            max-width: 880px;
+            height: 60vh;
+            max-height: 520px;
             border-radius: 40px;
             display: grid;
-            grid-template-columns: 180px 1fr 180px;
+            grid-template-columns: 1fr 2.5fr 1fr;
             align-items: center;
             padding: 20px;
             box-shadow: inset 0 5px 15px rgba(255,255,255,0.3), 0 10px 0 #6d1313;
             border: 5px solid #6d1313;
-            transform-origin: center center;
-            transition: transform 0.3s ease; /* Weiche Drehung */
         }
 
         #screen-container {
@@ -59,17 +49,12 @@
             padding: 10px;
             border-radius: 12px;
             border: 3px solid #333;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         #screen {
             background-color: var(--screen-bg);
             width: 100%;
-            height: 100%;
+            aspect-ratio: 4 / 3;
             position: relative;
             border: 2px solid #7a8664;
             overflow: hidden;
@@ -121,91 +106,68 @@
 </head>
 <body>
 
-<div id="game-wrapper">
-    <div id="game-pad">
-        <div class="left-box">
-            <div class="move-axis" id="btn-left">
-                <div class="control-btn">◀</div>
-                <div class="btn-label">LINKS</div>
-            </div>
+<div id="game-pad">
+    <div class="left-box">
+        <div class="move-axis" id="btn-left">
+            <div class="control-btn">◀</div>
+            <div class="btn-label">LINKS</div>
         </div>
+    </div>
 
-        <div id="screen-container">
-            <div id="screen">
-                <div id="start-overlay">
-                    <h2 style="color:var(--lcd-ink); margin:0;">RhB SNOW CATCH</h2>
-                    <p style="color:var(--lcd-ink); font-size:12px; margin-bottom: 10px;">Depot Pontresina</p>
-                    <button id="btn-start" style="background:#222; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">START (FULLSCREEN)</button>
-                    
-                    <div id="highscore-board">
-                        </div>
-                </div>
-
-                <div class="ui">
-                    <div>VORRAT: <span id="ammo">40</span></div>
-                    <div style="text-align:right;">
-                        SCHAUFEL: <span id="snow-val">0</span>/2<br> WAGEN: <span id="wagon-val">0</span>/20
-                    </div>
-                </div>
+    <div id="screen-container">
+        <div id="screen">
+            <div id="start-overlay">
+                <h2 style="color:var(--lcd-ink); margin:0;">RhB SNOW CATCH</h2>
+                <p style="color:var(--lcd-ink); font-size:12px; margin-bottom: 10px;">Depot Pontresina</p>
+                <button id="btn-start" style="background:#222; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">START</button>
                 
-                <div id="yeti" style="position:absolute; top:10px; left:45%; font-size:35px;">👹</div>
-                <div id="flakes-container"></div>
+                <div id="highscore-board">
+                    </div>
+            </div>
 
-                <div id="player-svg" style="position:absolute; top:180px;">
-                    <svg viewBox="0 0 75 95" width="60" height="75">
-                        <ellipse cx="30" cy="15" rx="9" ry="11" fill="black" />
-                        <rect x="20" y="5" width="20" height="4" fill="black" />
-                        <rect x="27" y="26" width="7" height="30" rx="2" fill="black" />
-                        <path d="M28 55 L18 80 L12 80 M32 55 L42 80 L48 80" stroke="black" stroke-width="4" fill="none" />
-                        <path d="M30 35 L55 45 L62 45" stroke="black" stroke-width="3" fill="none" />
-                        <rect x="58" y="42" width="18" height="5" fill="black" />
-                        <path id="shovel-snow-load" d="M58 42 Q67 -5 77 42 Z" fill="black" style="display:none;" />
-                    </svg>
+            <div class="ui">
+                <div>VORRAT: <span id="ammo">40</span></div>
+                <div style="text-align:right;">
+                    SCHAUFEL: <span id="snow-val">0</span>/5<br>
+                    WAGEN: <span id="wagon-val">0</span>/20
                 </div>
+            </div>
+            
+            <div id="yeti" style="position:absolute; top:10px; left:45%; font-size:35px;">👹</div>
+            <div id="flakes-container"></div>
 
-                <div id="train-unit">
-                    <svg width="70" height="50" viewBox="0 0 90 60"><rect x="5" y="15" width="80" height="40" rx="4" fill="black" /><rect x="10" y="20" width="18" height="15" fill="#9ead86" /><rect x="62" y="20" width="18" height="15" fill="#9ead86" /><circle cx="20" cy="55" r="5" fill="black" /><circle cx="70" cy="55" r="5" fill="black" /></svg>
-                    <svg width="90" height="50" viewBox="0 0 110 60"><rect x="0" y="45" width="110" height="6" stroke="black" stroke-width="3" fill="none" /><line x1="10" y1="45" x2="10" y2="15" stroke="black" stroke-width="2" /><line x1="55" y1="45" x2="55" y2="15" stroke="black" stroke-width="2" /><line x1="100" y1="45" x2="100" y2="15" stroke="black" stroke-width="2" /><path id="w-snow-1" d="M10 45 Q35 25 60 45 Z" style="fill:black;display:none;" /><path id="w-snow-2" d="M50 45 Q80 20 105 45 Z" style="fill:black;display:none;" /><path id="w-snow-3" d="M20 35 Q55 5 95 35 Z" style="fill:black;display:none;" /><circle cx="30" cy="55" r="5" fill="black" /><circle cx="80" cy="55" r="5" fill="black" /></svg>
-                </div>
+            <div id="player-svg" style="position:absolute; top:180px;">
+                <svg viewBox="0 0 75 95" width="60" height="75">
+                    <ellipse cx="30" cy="15" rx="9" ry="11" fill="black" />
+                    <rect x="20" y="5" width="20" height="4" fill="black" />
+                    <rect x="27" y="26" width="7" height="30" rx="2" fill="black" />
+                    <path d="M28 55 L18 80 L12 80 M32 55 L42 80 L48 80" stroke="black" stroke-width="4" fill="none" />
+                    <path d="M30 35 L55 45 L62 45" stroke="black" stroke-width="3" fill="none" />
+                    <rect x="58" y="42" width="18" height="5" fill="black" />
+                    <path id="shovel-snow-load" d="M58 42 Q67 -5 77 42 Z" fill="black" style="display:none;" />
+                </svg>
+            </div>
+
+            <div id="train-unit">
+                <svg width="70" height="50" viewBox="0 0 90 60"><rect x="5" y="15" width="80" height="40" rx="4" fill="black" /><rect x="10" y="20" width="18" height="15" fill="#9ead86" /><rect x="62" y="20" width="18" height="15" fill="#9ead86" /><circle cx="20" cy="55" r="5" fill="black" /><circle cx="70" cy="55" r="5" fill="black" /></svg>
+                <svg width="90" height="50" viewBox="0 0 110 60"><rect x="0" y="45" width="110" height="6" stroke="black" stroke-width="3" fill="none" /><line x1="10" y1="45" x2="10" y2="15" stroke="black" stroke-width="2" /><line x1="55" y1="45" x2="55" y2="15" stroke="black" stroke-width="2" /><line x1="100" y1="45" x2="100" y2="15" stroke="black" stroke-width="2" /><path id="w-snow-1" d="M10 45 Q35 25 60 45 Z" style="fill:black;display:none;" /><path id="w-snow-2" d="M50 45 Q80 20 105 45 Z" style="fill:black;display:none;" /><path id="w-snow-3" d="M20 35 Q55 5 95 35 Z" style="fill:black;display:none;" /><circle cx="30" cy="55" r="5" fill="black" /><circle cx="80" cy="55" r="5" fill="black" /></svg>
             </div>
         </div>
+    </div>
 
-        <div class="right-box">
-            <div id="btn-out">
-                <div class="control-btn action-btn">OUT</div>
-                <div class="btn-label">ABLADEN</div>
-            </div>
-            <div id="btn-right">
-                <div class="control-btn">▶</div>
-                <div class="btn-label">RECHTS</div>
-            </div>
+    <div class="right-box">
+        <div id="btn-out">
+            <div class="control-btn action-btn">OUT</div>
+            <div class="btn-label">ABLADEN</div>
+        </div>
+        <div id="btn-right">
+            <div class="control-btn">▶</div>
+            <div class="btn-label">RECHTS</div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- Responsive Auto-Skalierung & Rotation ---
-    function resizeGame() {
-        const pad = document.getElementById('game-pad');
-        const winW = window.innerWidth;
-        const winH = window.innerHeight;
-        
-        let scale;
-        // Wenn das Gerät höher als breit ist (Hochformat)
-        if (winH > winW) {
-            // Berechne Skalierung für 90 Grad gedrehten Zustand (mit 20px Rand)
-            scale = Math.min((winH - 20) / 800, (winW - 20) / 450);
-            pad.style.transform = `rotate(90deg) scale(${scale})`;
-        } else {
-            // Querformat
-            scale = Math.min((winW - 20) / 800, (winH - 20) / 450);
-            pad.style.transform = `rotate(0deg) scale(${scale})`;
-        }
-    }
-    
-    window.addEventListener('resize', resizeGame);
-    resizeGame(); // Initialer Aufruf
-
     // --- Audio System ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(f, d, t="square", v=0.08) {
@@ -250,27 +212,14 @@
 
     // --- Spielsteuerung / Logik ---
     function startGame() {
-        // Vollbild anfordern
-        let elem = document.documentElement;
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen().catch(err => console.log("Fullscreen Error", err));
-        } else if (elem.webkitRequestFullscreen) { /* Safari Mobile */
-            elem.webkitRequestFullscreen();
-        }
-
         document.getElementById('start-overlay').style.display = 'none';
         gameActive = true;
         audioCtx.resume();
-        
-        // Timeout für Resize-Update nach Fullscreen-Wechsel
-        setTimeout(resizeGame, 500); 
     }
 
     function resetGame() {
         pPos=2; tPos=0; tDir=1; snowInv=0; wagonFill=0; flakes=[]; flakesLeft=40;
         document.getElementById('start-overlay').style.display = 'flex';
-        // Vollbild beenden optional:
-        // if (document.exitFullscreen) document.exitFullscreen();
         render();
     }
 
@@ -279,6 +228,7 @@
         if(action === 'left' && pPos>0){ pPos--; playBeep(250, 0.05); }
         if(action === 'right' && pPos<7){ pPos++; playBeep(250, 0.05); }
         if(action === 'out'){
+            // Ablade-Logik: Schaufel (pPos+1) muss grob über dem Wagen sein
             if(Math.abs(pPos-(tPos+1.5))<=1 && snowInv>0){ 
                 wagonFill+=snowInv; snowInv=0; 
                 playBeep(700, 0.15, "triangle"); 
@@ -297,12 +247,12 @@
 
         flakes.forEach((f, i) => {
             f.y++;
+            
+            // HIER IST DIE ÄNDERUNG:
+            // f.x === pPos + 1 stellt sicher, dass die Flocke auf der Schaufel landet,
+            // nicht auf dem Kopf des Männchens (pPos).
             if(f.y===4 && f.x === (pPos + 1)) { 
-                // LIMIT GEÄNDERT AUF 2
-                if(snowInv<2){
-                    snowInv++; 
-                    playBeep(900, 0.1);
-                } 
+                if(snowInv<5){snowInv++; playBeep(900, 0.1);} 
                 flakes.splice(i,1); 
             }
             else if(f.y>6) flakes.splice(i,1);
@@ -369,6 +319,7 @@
         if(e.key === " " || e.key === "ArrowUp") doAction('out');
     });
 
+    // Initialisieren
     updateHighscoreBoard();
     render();
 </script>
