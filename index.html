@@ -95,7 +95,7 @@
 
 <div id="game-pad">
     <div class="left-box">
-        <div class="move-axis" ontouchstart="moveLeft()" onmousedown="moveLeft()">
+        <div class="move-axis" onpointerdown="doAction(event, 'left')">
             <div class="control-btn">◀</div>
             <div class="btn-label">LINKS</div>
         </div>
@@ -106,7 +106,7 @@
             <div id="start-overlay">
                 <h2 style="color:var(--lcd-ink); margin:0;">RhB SNOW CATCH</h2>
                 <p style="color:var(--lcd-ink); font-size:12px;">Depot Pontresina (Slow Mode)</p>
-                <button onclick="startGame()" style="background:#222; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">START</button>
+                <button onpointerdown="startGame()" style="background:#222; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">START</button>
             </div>
 
             <div class="ui">
@@ -140,11 +140,11 @@
     </div>
 
     <div class="right-box">
-        <div ontouchstart="actionEmpty()" onmousedown="actionEmpty()">
+        <div onpointerdown="doAction(event, 'out')">
             <div class="control-btn action-btn">OUT</div>
             <div class="btn-label">ABLADEN</div>
         </div>
-        <div ontouchstart="moveRight()" onmousedown="moveRight()">
+        <div onpointerdown="doAction(event, 'right')">
             <div class="control-btn">▶</div>
             <div class="btn-label">RECHTS</div>
         </div>
@@ -169,18 +169,24 @@
         audioCtx.resume();
     }
 
-    // Takt jetzt auf 800ms für entspannteres Spiel
+    // Neuer Controller, der Doppelklicks abfängt
+    function doAction(e, action) {
+        if(e) e.preventDefault(); // Stoppt Ghost-Clicks auf Mobilgeräten
+        if(!gameActive) return;
+
+        if(action === 'left') moveLeft();
+        if(action === 'right') moveRight();
+        if(action === 'out') actionEmpty();
+    }
+
     const loop = setInterval(() => {
         if(!gameActive) return;
         
-        // Zug bewegen
         tPos += tDir; if(tPos>=4 || tPos<=0) tDir*=-1;
         playBeep(120, 0.04, "sine", 0.03);
 
-        // Flocken bewegen
         flakes.forEach((f, i) => {
             f.y++;
-            // Fang-Stufe 4
             if(f.y===4 && Math.abs(f.x-pPos)<=0.5) { 
                 if(snowInv<5){snowInv++; playBeep(900, 0.1);} 
                 flakes.splice(i,1); 
@@ -188,7 +194,6 @@
             else if(f.y>6) flakes.splice(i,1);
         });
 
-        // Yeti wirft seltener (Zufallswert erhöht)
         if(flakesLeft>0 && flakes.length<2 && Math.random()>0.6) {
             flakes.push({x: Math.floor(Math.random()*8), y:0}); flakesLeft--;
             document.getElementById('ammo').innerText = flakesLeft;
@@ -199,11 +204,10 @@
         render();
     }, 800);
 
-    function moveLeft(){ if(gameActive && pPos>0){ pPos--; playBeep(250, 0.05); render(); }}
-    function moveRight(){ if(gameActive && pPos<7){ pPos++; playBeep(250, 0.05); render(); }}
+    function moveLeft(){ if(pPos>0){ pPos--; playBeep(250, 0.05); render(); }}
+    function moveRight(){ if(pPos<7){ pPos++; playBeep(250, 0.05); render(); }}
     
     function actionEmpty(){
-        if(!gameActive) return;
         if(Math.abs(pPos-(tPos+1.5))<=1 && snowInv>0){ 
             wagonFill+=snowInv; snowInv=0; 
             playBeep(700, 0.15, "triangle"); 
@@ -214,7 +218,7 @@
 
     function checkEnd() {
         gameActive=false;
-        if(wagonFill>=20) alert("Lok 1 vorwärts Depo Pontresina");
+        if(wagonFill>=20) alert("Lok 1 vorwärts Depot Pontresina");
         else alert("Der Winter ist noch lang, Pfeife!!!");
         location.reload();
     }
@@ -237,7 +241,14 @@
             c.appendChild(d);
         });
     }
+
+    // Tastatursteuerung für Desktop-Spieler wieder hinzugefügt
+    document.addEventListener('keydown', (e) => {
+        if(!gameActive) return;
+        if(e.key === "ArrowLeft") doAction(null, 'left');
+        if(e.key === "ArrowRight") doAction(null, 'right');
+        if(e.key === " " || e.key === "ArrowUp") doAction(null, 'out');
+    });
 </script>
 </body>
 </html>
-
