@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#a31d1d">
+    <meta name="theme-color" content="#1a1a1a">
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RhB Snow">
+    
     <title>RhB Snow Catch - Highscore Edition</title>
     <style>
         :root {
@@ -27,11 +33,11 @@
             margin: 0;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
+            overscroll-behavior-y: contain; /* Blockiert Pull-to-Refresh auf Handys */
         }
 
         #game-pad {
             background-color: var(--case-color);
-            /* Feste Basisgröße für perfekte Skalierung */
             width: 800px;
             height: 450px;
             border-radius: 40px;
@@ -41,7 +47,6 @@
             padding: 20px;
             box-shadow: inset 0 5px 15px rgba(255,255,255,0.3), 0 10px 0 #6d1313;
             border: 5px solid #6d1313;
-            /* Wichtig für die Drehung und Skalierung */
             transform-origin: center center;
             transition: transform 0.3s ease;
         }
@@ -121,7 +126,8 @@
             <div id="start-overlay">
                 <h2 style="color:var(--lcd-ink); margin:0;">RhB SNOW CATCH</h2>
                 <p style="color:var(--lcd-ink); font-size:12px; margin-bottom: 10px;">Depot Pontresina</p>
-                <button id="btn-start" onclick="startGame()" style="background:#222; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">START</button>
+                
+                <button id="btn-start" onpointerdown="startGame(event)" style="background:#222; color:white; border:none; padding:15px 25px; border-radius:5px; font-weight:bold; font-size: 16px; cursor:pointer; touch-action: manipulation;">START</button>
                 
                 <div id="highscore-board"></div>
             </div>
@@ -169,14 +175,13 @@
 </div>
 
 <script>
-    // --- NEU: Auto-Skalierung und Drehung ---
+    // --- Auto-Skalierung und Drehung ---
     function resizeGame() {
         const pad = document.getElementById('game-pad');
         const winW = window.innerWidth;
         const winH = window.innerHeight;
         
         let scale;
-        // Wenn hochkant, drehen wir das Spiel um 90 Grad
         if (winH > winW) {
             scale = Math.min((winH - 20) / 800, (winW - 20) / 450);
             pad.style.transform = `rotate(90deg) scale(${scale})`;
@@ -185,19 +190,35 @@
             pad.style.transform = `rotate(0deg) scale(${scale})`;
         }
     }
-    // Hört auf Bildschirmänderungen
     window.addEventListener('resize', resizeGame);
-    // Einmal beim Start aufrufen
     resizeGame();
 
-    // --- Audio System ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // --- Audio System (FEHLERSICHER GEMACHT) ---
+    let audioCtx = null; // WICHTIG: Nicht sofort laden!
+
+    function initAudio() {
+        try {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        } catch(e) {
+            console.warn("Audio Fehler:", e);
+        }
+    }
+
     function playBeep(f, d, t="square", v=0.08) {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-        o.type=t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
-        g.gain.setValueAtTime(v, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+d);
-        o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
+        if(!audioCtx) return; // Absturzsicherung
+        try {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+            o.type=t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+d);
+            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
+        } catch(e) {}
     }
 
     // --- Spiel Variablen ---
@@ -205,47 +226,164 @@
 
     // --- Highscore System ---
     function saveHighscore(score) {
-        let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
-        let now = new Date();
-        let dateStr = `${now.getDate()}.${now.getMonth()+1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-        
-        history.unshift({ date: dateStr, score: score });
-        if(history.length > 10) history = history.slice(0, 10); 
-        
-        localStorage.setItem('rhbHistory', JSON.stringify(history));
-        updateHighscoreBoard();
+        try {
+            let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
+            let now = new Date();
+            let dateStr = `${now.getDate()}.${now.getMonth()+1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            history.unshift({ date: dateStr, score: score });
+            if(history.length > 10) history = history.slice(0, 10); 
+            
+            localStorage.setItem('rhbHistory', JSON.stringify(history));
+            updateHighscoreBoard();
+        } catch(e) { console.warn("Highscore konnte nicht gespeichert werden."); }
     }
 
     function updateHighscoreBoard() {
-        let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
-        let board = document.getElementById('highscore-board');
-        if(history.length === 0) {
-            board.innerHTML = "Noch keine Einträge.";
-            return;
+        try {
+            let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
+            let board = document.getElementById('highscore-board');
+            if(history.length === 0) {
+                board.innerHTML = "Noch keine Einträge.";
+                return;
+            }
+            let html = "<strong>Letzte 10 Schichten:</strong><br>";
+            history.forEach((entry, index) => {
+                let symbol = entry.score >= 20 ? "🏆" : "❄️";
+                html += `${index+1}. ${entry.date} - ${entry.score}/20 ${symbol}<br>`;
+            });
+            board.innerHTML = html;
+        } catch(e) {
+            document.getElementById('highscore-board').innerHTML = "Lokaler Speicher blockiert.";
         }
-        
-        let html = "<strong>Letzte 10 Schichten:</strong><br>";
-        history.forEach((entry, index) => {
-            let symbol = entry.score >= 20 ? "🏆" : "❄️";
-            html += `${index+1}. ${entry.date} - ${entry.score}/20 ${symbol}<br>`;
-        });
-        board.innerHTML = html;
     }
 
     // --- Spielsteuerung / Logik ---
-    function startGame() {
-        // NEU: Vollbild anfordern (in try/catch, falls Browser es blockiert)
-        try {
-            let elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => console.log(err));
-            } else if (elem.webkitRequestFullscreen) { // Safari
-                elem.webkitRequestFullscreen();
-            }
-        } catch(e) {}
+    function startGame(e) {
+        if(e) e.preventDefault(); // Verhindert doppeltes Auslösen auf dem Handy
+        if(gameActive) return;
 
+        // 1. ZUERST das Spiel visuell starten (damit es auf jeden Fall lädt)
         document.getElementById('start-overlay').style.display = 'none';
         gameActive = true;
-        if(audioCtx.state === 'suspended') audioCtx.resume();
+
+        // 2. Audio sicher laden
+        initAudio();
+
+        // 3. Fullscreen versuchen (mit Fallback)
+        try {
+            // Check: Sind wir nicht eh schon im Installiert-Modus (Standalone)?
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                let elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => console.log(err));
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                }
+            }
+        } catch(e) {}
         
-        // Kurz warten, bis Fullscreen aktiv ist, dann
+        setTimeout(resizeGame, 300);
+    }
+
+    function resetGame() {
+        pPos=2; tPos=0; tDir=1; snowInv=0; wagonFill=0; flakes=[]; flakesLeft=40;
+        document.getElementById('start-overlay').style.display = 'flex';
+        render();
+    }
+
+    function doAction(action) {
+        if(!gameActive) return;
+        if(action === 'left' && pPos>0){ pPos--; playBeep(250, 0.05); }
+        if(action === 'right' && pPos<7){ pPos++; playBeep(250, 0.05); }
+        if(action === 'out'){
+            if(Math.abs(pPos-(tPos+1.5))<=1 && snowInv>0){ 
+                wagonFill+=snowInv; snowInv=0; 
+                playBeep(700, 0.15, "triangle"); 
+            } else {
+                playBeep(80, 0.1);
+            }
+        }
+        render();
+    }
+
+    const loop = setInterval(() => {
+        if(!gameActive) return;
+        
+        tPos += tDir; if(tPos>=4 || tPos<=0) tDir*=-1;
+        playBeep(120, 0.04, "sine", 0.03);
+
+        flakes.forEach((f, i) => {
+            f.y++;
+            if(f.y===4 && f.x === (pPos + 1)) { 
+                if(snowInv<5){snowInv++; playBeep(900, 0.1);} 
+                flakes.splice(i,1); 
+            }
+            else if(f.y>6) flakes.splice(i,1);
+        });
+
+        if(flakesLeft>0 && flakes.length<2 && Math.random()>0.6) {
+            flakes.push({x: Math.floor(Math.random()*8), y:0}); flakesLeft--;
+            playBeep(500, 0.05);
+        }
+        
+        if(flakesLeft===0 && flakes.length===0 && snowInv===0) checkEnd();
+        render();
+    }, 800);
+
+    function checkEnd() {
+        gameActive=false;
+        saveHighscore(wagonFill);
+        if(wagonFill>=20) alert("Lok 1 vorwärts Depot Pontresina!");
+        else alert("Der Winter ist noch lang, Pfeife!!!");
+        resetGame(); 
+    }
+
+    function render() {
+        document.getElementById('player-svg').style.left = (pPos * 45) + "px";
+        document.getElementById('shovel-snow-load').style.display = snowInv>0 ? "block" : "none";
+        document.getElementById('snow-val').innerText = snowInv;
+        document.getElementById('ammo').innerText = flakesLeft;
+        document.getElementById('train-unit').style.left = (tPos * 50) + "px";
+        document.getElementById('wagon-val').innerText = wagonFill;
+        for(let i=1; i<=3; i++) document.getElementById('w-snow-'+i).style.display = wagonFill >= (i*6) ? "block" : "none";
+        
+        const c = document.getElementById('flakes-container'); 
+        c.innerHTML = '';
+        flakes.forEach(f => {
+            const d = document.createElement('div'); 
+            d.className='flake'; d.innerText='❄️';
+            d.style.left=(f.x*45+15)+'px'; 
+            d.style.top=(f.y*42+60)+'px'; 
+            c.appendChild(d);
+        });
+    }
+
+    // --- Input Listener Registrierung ---
+    function bindButton(id, action) {
+        const btn = document.getElementById(id);
+        btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault(); 
+            doAction(action);
+        });
+        btn.addEventListener('contextmenu', e => e.preventDefault());
+    }
+
+    bindButton('btn-left', 'left');
+    bindButton('btn-right', 'right');
+    bindButton('btn-out', 'out');
+
+    // Tastatursteuerung für Desktop-Spieler
+    document.addEventListener('keydown', (e) => {
+        if(!gameActive) return;
+        if(e.key === "ArrowLeft") doAction('left');
+        if(e.key === "ArrowRight") doAction('right');
+        if(e.key === " " || e.key === "ArrowUp") doAction('out');
+    });
+
+    // Initialisieren
+    updateHighscoreBoard();
+    render();
+</script>
+</body>
+</html>
