@@ -112,7 +112,7 @@
             </div>
 
             <div class="ui">
-                <div>VORRAT: <span id="ammo">35</span></div>
+                <div>VORRAT: <span id="ammo">40</span></div>
                 <div style="text-align:right;">
                     SCHAUFEL: <span id="snow-val">0</span><br>
                     WAGEN: <span id="wagon-val">0</span>/20
@@ -163,7 +163,7 @@
         o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
     }
 
-    let pPos=2, tPos=0, tDir=1, snowInv=0, wagonFill=0, flakes=[], flakesLeft=35, gameActive=false;
+    let pPos=2, tPos=0, tDir=1, snowInv=0, wagonFill=0, flakes=[], flakesLeft=40, gameActive=false;
 
     function startGame() {
         document.getElementById('start-overlay').style.display = 'none';
