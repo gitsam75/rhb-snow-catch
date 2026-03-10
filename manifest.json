@@ -8,9 +8,10 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192/a31d1d/ffffff?text=RhB",
+     "src": "icon.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "512x512"
     }
   ]
+
 }
