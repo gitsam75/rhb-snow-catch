@@ -14,7 +14,6 @@
 
         * {
             box-sizing: border-box;
-            /* Verhindert Text-Markierung */
             -webkit-user-select: none;
             user-select: none;
         }
@@ -61,7 +60,6 @@
             overflow: hidden;
         }
 
-        /* Startbildschirm & Highscore */
         #start-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -94,7 +92,6 @@
             width: 70px; height: 70px; background: #222; border: 5px solid #000;
             border-radius: 50%; color: #fff; font-size: 24px; cursor: pointer;
             box-shadow: 0 5px 0 #000; display: flex; justify-content: center; align-items: center;
-            /* Das ist der wichtigste Befehl gegen Ghost Clicks: */
             touch-action: none; 
         }
         .control-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; background: #444; }
@@ -187,12 +184,11 @@
     // --- Highscore System ---
     function saveHighscore(score) {
         let history = JSON.parse(localStorage.getItem('rhbHistory')) || [];
-        // Kurzes Datumsformat (z.B. 24.12. 14:30)
         let now = new Date();
         let dateStr = `${now.getDate()}.${now.getMonth()+1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
         
         history.unshift({ date: dateStr, score: score });
-        if(history.length > 10) history = history.slice(0, 10); // Nur die letzten 10 behalten
+        if(history.length > 10) history = history.slice(0, 10); 
         
         localStorage.setItem('rhbHistory', JSON.stringify(history));
         updateHighscoreBoard();
@@ -232,6 +228,7 @@
         if(action === 'left' && pPos>0){ pPos--; playBeep(250, 0.05); }
         if(action === 'right' && pPos<7){ pPos++; playBeep(250, 0.05); }
         if(action === 'out'){
+            // Ablade-Logik: Schaufel (pPos+1) muss grob über dem Wagen sein
             if(Math.abs(pPos-(tPos+1.5))<=1 && snowInv>0){ 
                 wagonFill+=snowInv; snowInv=0; 
                 playBeep(700, 0.15, "triangle"); 
@@ -250,7 +247,11 @@
 
         flakes.forEach((f, i) => {
             f.y++;
-            if(f.y===4 && Math.abs(f.x-pPos)<=0.5) { 
+            
+            // HIER IST DIE ÄNDERUNG:
+            // f.x === pPos + 1 stellt sicher, dass die Flocke auf der Schaufel landet,
+            // nicht auf dem Kopf des Männchens (pPos).
+            if(f.y===4 && f.x === (pPos + 1)) { 
                 if(snowInv<5){snowInv++; playBeep(900, 0.1);} 
                 flakes.splice(i,1); 
             }
@@ -268,10 +269,10 @@
 
     function checkEnd() {
         gameActive=false;
-        saveHighscore(wagonFill); // Speichern vor dem Alert!
+        saveHighscore(wagonFill);
         if(wagonFill>=20) alert("Lok 1 vorwärts Depot Pontresina!");
         else alert("Der Winter ist noch lang, Pfeife!!!");
-        resetGame(); // Weicher Reset statt location.reload()
+        resetGame(); 
     }
 
     function render() {
@@ -295,15 +296,13 @@
     }
 
     // --- Input Listener Registrierung ---
-    // Verhindert zu 100% Ghost Clicks durch pointerdown und e.preventDefault()
     function bindButton(id, action) {
         const btn = document.getElementById(id);
         btn.addEventListener('pointerdown', (e) => {
-            e.preventDefault(); // Stoppt den Browser!
+            e.preventDefault(); 
             if(id === 'btn-start') startGame();
             else doAction(action);
         });
-        // Kontextmenü bei langem Drücken unterdrücken
         btn.addEventListener('contextmenu', e => e.preventDefault());
     }
 
